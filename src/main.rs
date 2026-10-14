@@ -13,7 +13,7 @@ fn main() {
 
     let mut x = 0;
 
-    while x < 20 {
+    while x < 30 {
         let prev_state = state.clone();
 
         let action = agent.choose_action();

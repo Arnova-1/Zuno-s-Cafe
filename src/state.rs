@@ -1,5 +1,8 @@
+use rand::random_range;
 use crate::agent::Action;
 use crate::environment::Environment;
+
+const SPAWN_RATE:f32 = 0.3;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Machine {
@@ -55,6 +58,13 @@ impl State {
             }
             _ => {}
         }
+
+        if let Customer::Absent = self.customer {
+            if random_range(0.0..1.0) < SPAWN_RATE {
+                self.customer = Customer::Arrived
+            }
+        }
+
         environment.run_tick();
         outcome
     }
@@ -72,7 +82,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             machine: Machine::Idle,
-            customer: Customer::Arrived
+            customer: Customer::Absent
         }
     }
 }
