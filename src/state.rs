@@ -4,14 +4,14 @@ use crate::environment::Environment;
 
 const SPAWN_RATE:f32 = 0.3;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
 pub enum Machine {
     Idle,
     Cooking(u32),
     Done
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, Hash, PartialEq)]
 pub enum Customer {
     Arrived,
     Waiting(u32),
@@ -24,15 +24,16 @@ pub enum Outcome {
     Left
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, Hash, PartialEq)]
 pub struct State {
     pub customer: Customer,
     pub machine: Machine
 }
 
 impl State {
-    pub fn step (&mut self, environment: &mut Environment, action: Action) -> Option<(Outcome, f32)> {
-        let outcome = self.try_serve(action);
+    pub fn step (&mut self, environment: &mut Environment, action: Action) -> (Option<Outcome>, f32) {
+        let mut outcome = self.try_serve(action);
+        
         match (self.machine, action) {
             (Machine::Idle, Action::StartCooking) => {
                 self.machine = Machine::Cooking(2);
@@ -51,7 +52,7 @@ impl State {
             }
             Customer::Waiting(1) => {
                     self.customer = Customer::Absent;
-                    return Some((Outcome::Left, -10.0))
+                    outcome = (Some(Outcome::Left), -10.0)
                 }
             Customer::Waiting(p) => {
                 self.customer = Customer::Waiting(p.saturating_sub(1));
@@ -68,13 +69,13 @@ impl State {
         environment.run_tick();
         outcome
     }
-    fn try_serve(&mut self, action: Action) -> Option<(Outcome, f32)> {
+    fn try_serve(&mut self, action: Action) -> (Option<Outcome>, f32) {
         if let (Machine::Done, &Customer::Waiting(p), Action::Serve) = (&self.machine, &self.customer, &action) {
             self.customer = Customer::Absent;
             self.machine = Machine::Idle;
-            return Some((Outcome::Served, 5.0 + p as f32))
+            return (Some(Outcome::Served), 5.0 + p as f32)
         }
-        None
+        (None, 0.0)
     }
 }
 
